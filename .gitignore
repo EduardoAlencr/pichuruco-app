@@ -43,3 +43,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# Flutter
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache
+.pub/
+.idea/
+.vscode/
+
+# Firebase configs locais (se quiser manter privados)
+firebase_options.dart
