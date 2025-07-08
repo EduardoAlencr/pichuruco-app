@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "622502627516",
+    "project_id": "pichuruco",
+    "storage_bucket": "pichuruco.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622502627516:android:10e310a1eaafdbb9f1a8b9",
+        "android_client_info": {
+          "package_name": "com.example.pichuru"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVjEVDOwUvE_6gbTmmmGZriC4efqUnYyA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
