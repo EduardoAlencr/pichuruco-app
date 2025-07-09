@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:pichuruco/exports/export_utils.dart';
 
 class HistoricoDepositosScreen extends StatefulWidget {
   const HistoricoDepositosScreen({super.key});
@@ -12,12 +13,35 @@ class HistoricoDepositosScreen extends StatefulWidget {
 
 class _HistoricoDepositosScreenState extends State<HistoricoDepositosScreen> {
   String? codigo;
+  List<Map<String, dynamic>> listaDados = [];
 
   @override
   void initState() {
     super.initState();
     final box = Hive.box('pichurucoBox');
     codigo = box.get('codigo_casal');
+  }
+
+  Future<void> _carregarDados() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('cofrinhos')
+        .doc(codigo)
+        .collection('depositos')
+        .orderBy('data', descending: true)
+        .get();
+
+    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+
+    listaDados = snapshot.docs.map((doc) {
+      final data = (doc['data'] as Timestamp).toDate();
+      return {
+        'valor': (doc['valor'] as num).toDouble(),
+        'quem': doc['quem'],
+        'elogio': doc['elogio'] ?? '',
+        'lembranca': doc['lembranca'] ?? '',
+        'data': dateFormat.format(data),
+      };
+    }).toList();
   }
 
   @override
@@ -29,6 +53,22 @@ class _HistoricoDepositosScreenState extends State<HistoricoDepositosScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+            onPressed: () async {
+              await _carregarDados();
+              exportarPDF(listaDados);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.table_view_outlined, color: Colors.white),
+            onPressed: () async {
+              await _carregarDados();
+              exportarCSV(listaDados);
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

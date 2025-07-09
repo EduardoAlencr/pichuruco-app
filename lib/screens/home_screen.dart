@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:animations/animations.dart';
 import 'package:animated_background/animated_background.dart';
+import '../exports/export_utils.dart';
 
 import 'cofrinho_config_screen.dart';
 import 'novo_deposito_screen.dart';
@@ -30,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   late AnimationController _pulseController;
   Timer? _timer;
+
+  List<Map<String, dynamic>> listaDados = [];
 
   @override
   void initState() {
@@ -60,6 +63,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     usuario = box.get('usuario', defaultValue: 'Usuário');
     codigo = box.get('codigo_casal', defaultValue: '');
     setState(() {});
+  }
+
+  Future<void> _carregarDados() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('cofrinhos')
+        .doc(codigo)
+        .collection('depositos')
+        .orderBy('data', descending: true)
+        .get();
+
+    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+
+    listaDados = snapshot.docs.map((doc) {
+      final data = (doc['data'] as Timestamp).toDate();
+      return {
+        'valor': (doc['valor'] as num).toDouble(),
+        'quem': doc['quem'],
+        'elogio': doc['elogio'] ?? '',
+        'lembranca': doc['lembranca'] ?? '',
+        'data': dateFormat.format(data),
+      };
+    }).toList();
   }
 
   Future<void> _carregarDadosFirestore() async {
@@ -143,158 +168,142 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: Colors.deepPurple,
               backgroundColor: const Color(0xFF0D1B2A),
               onRefresh: _carregarDadosFirestore,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Text(
-                        '"$frase"',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white70,
-                          fontStyle: FontStyle.italic,
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Center(
+                        child: Text(
+                          '"$frase"',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white70,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    AnimatedBuilder(
-                      animation: _pulseController,
-                      builder: (context, child) {
-                        return Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1B263B),
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              if (_metaAlcancada)
-                                BoxShadow(
-                                  color: Colors.deepPurple.withOpacity(
-                                    0.3 + 0.3 * _pulseController.value,
+                      const SizedBox(height: 36),
+                      AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, child) {
+                          return Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B263B),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                if (_metaAlcancada)
+                                  BoxShadow(
+                                    color: Colors.deepPurple.withOpacity(
+                                      0.3 + 0.3 * _pulseController.value,
+                                    ),
+                                    blurRadius: 16,
+                                    spreadRadius: 1,
                                   ),
-                                  blurRadius: 16,
-                                  spreadRadius: 1,
-                                ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              const Text('Saldo atual', style: TextStyle(fontSize: 16, color: Colors.white70)),
-                              const SizedBox(height: 4),
-                              Text(
-                                currencyFormat.format(saldo),
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text('Meta', style: TextStyle(fontSize: 16, color: Colors.white70)),
-                              const SizedBox(height: 4),
-                              Text(
-                                currencyFormat.format(meta),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.deepPurple,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white12,
-                                    borderRadius: BorderRadius.circular(12),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                const Text('Saldo atual', style: TextStyle(fontSize: 16, color: Colors.white70)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  currencyFormat.format(saldo),
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
                                   ),
-                                  child: Stack(
-                                    children: [
-                                      FractionallySizedBox(
-                                        widthFactor: progresso.clamp(0.0, 1.0),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Color(0xFFD1C4E9),
-                                                Color(0xFF9575CD),
-                                                Color(0xFF512DA8),
-                                              ],
-                                              stops: [0.0, 0.5, 1.0],
-                                            ),
-                                          ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text('Meta', style: TextStyle(fontSize: 16, color: Colors.white70)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  currencyFormat.format(meta),
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white12,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: FractionallySizedBox(
+                                      widthFactor: progresso.clamp(0.0, 1.0),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.deepPurple,
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text('${(progresso * 100).round()}%', style: const TextStyle(color: Colors.white60)),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Faltam ${currencyFormat.format(restante > 0 ? restante : 0)} • $tempoRestante',
-                                style: const TextStyle(fontSize: 14, color: Colors.white60),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                Text('${(progresso * 100).round()}%', style: const TextStyle(color: Colors.white60)),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Faltam ${currencyFormat.format(restante > 0 ? restante : 0)} • $tempoRestante',
+                                  style: const TextStyle(fontSize: 14, color: Colors.white60),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          OpenContainer(
+                            closedColor: Colors.transparent,
+                            openColor: Colors.transparent,
+                            closedElevation: 0,
+                            transitionDuration: const Duration(milliseconds: 500),
+                            openBuilder: (_, __) => const NovoDepositoScreen(),
+                            closedBuilder: (_, openContainer) => IconButton(
+                              icon: const Icon(Icons.add_circle_outline, size: 32, color: Colors.white),
+                              onPressed: openContainer,
+                            ),
                           ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        OpenContainer(
-                          closedColor: Colors.transparent,
-                          openColor: Colors.transparent,
-                          closedElevation: 0,
-                          transitionDuration: const Duration(milliseconds: 500),
-                          openBuilder: (_, __) => const NovoDepositoScreen(),
-                          closedBuilder: (_, openContainer) => IconButton(
-                            icon: const Icon(Icons.add_circle_outline, size: 32, color: Colors.white),
-                            onPressed: openContainer,
+                          OpenContainer(
+                            closedColor: Colors.transparent,
+                            openColor: Colors.transparent,
+                            closedElevation: 0,
+                            transitionDuration: const Duration(milliseconds: 500),
+                            openBuilder: (_, __) => const HistoricoDepositosScreen(),
+                            closedBuilder: (_, openContainer) => IconButton(
+                              icon: const Icon(Icons.history, size: 32, color: Colors.white),
+                              onPressed: openContainer,
+                            ),
                           ),
-                        ),
-                        OpenContainer(
-                          closedColor: Colors.transparent,
-                          openColor: Colors.transparent,
-                          closedElevation: 0,
-                          transitionDuration: const Duration(milliseconds: 500),
-                          openBuilder: (_, __) => const HistoricoDepositosScreen(),
-                          closedBuilder: (_, openContainer) => IconButton(
-                            icon: const Icon(Icons.history, size: 32, color: Colors.white),
-                            onPressed: openContainer,
-                          ),
-                        ),
-                        OpenContainer(
-                          closedColor: Colors.transparent,
-                          openColor: Colors.transparent,
-                          closedElevation: 0,
-                          transitionDuration: const Duration(milliseconds: 500),
-                          openBuilder: (_, __) => const Placeholder(),
-                          closedBuilder: (_, openContainer) => IconButton(
+                          IconButton(
                             icon: const Icon(Icons.download, size: 32, color: Colors.white),
-                            onPressed: openContainer,
+                            onPressed: () async {
+                              await _carregarDados();
+                              await exportarPDF(listaDados);
+                            },
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-
           if (_mostrarCelebracao)
             AnimatedBackground(
               behaviour: RandomParticleBehaviour(
